@@ -1,237 +1,208 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/common/Avatar';
-import Button from '../components/common/Button';
 import { formatDistanceToNow } from 'date-fns';
 
-function PostCard({ post, currentUser, onLike, onDelete }) {
-  const isOwn = post.author_id === currentUser?.id;
-  const isAdmin = currentUser?.role === 'admin';
-  const liked = post.liked_by?.includes(currentUser?.id);
-  const [showDelete, setShowDelete] = useState(false);
+const ACTION_ICONS = {
+  task_completed: { icon: '✅', color: '#10b981' },
+  task_created: { icon: '➕', color: '#3b82f6' },
+  task_status_changed: { icon: '🔄', color: '#8b5cf6' },
+  task_commented: { icon: '💬', color: '#f59e0b' },
+  announcement: { icon: '📢', color: '#ef4444' },
+};
 
+function AnnouncementCard({ ann, isAdmin, onPin, onDelete }) {
   return (
-    <div
-      className="animate-fade-in"
-      style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-xl)', padding: '20px 22px',
-        transition: 'border-color var(--transition)',
-      }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-light)'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-        <Avatar name={post.author_name} color={post.author_color} size={38} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{post.author_name}</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              {post.created_at ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : ''}
-            </span>
-            {post.category && (
-              <span style={{
-                fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 10,
-                background: 'var(--accent-dim)', color: 'var(--accent)',
-                textTransform: 'uppercase', letterSpacing: '0.04em',
-              }}>{post.category}</span>
-            )}
-          </div>
+    <div style={{
+      background: ann.pinned ? 'linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.04))' : 'var(--bg-card)',
+      border: `1px solid ${ann.pinned ? 'rgba(59,130,246,0.3)' : 'var(--border)'}`,
+      borderRadius: 'var(--radius-xl)', padding: '18px 20px', marginBottom: 14,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <Avatar name={ann.user_name} color={ann.user_color} size={32} />
+        <div>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{ann.user_name}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>
+            {formatDistanceToNow(new Date(ann.created_at), { addSuffix: true })}
+          </span>
         </div>
-        {(isOwn || isAdmin) && (
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowDelete(s => !s)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, borderRadius: 4, fontSize: 18, lineHeight: 1 }}
-            >⋯</button>
-            {showDelete && (
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-                padding: '4px', zIndex: 10, minWidth: 100,
-              }}>
-                <button
-                  onClick={() => { setShowDelete(false); onDelete(post.id); }}
-                  style={{ display: 'block', width: '100%', padding: '7px 12px', background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'left', borderRadius: 6 }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-dim)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                >Delete</button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.65, whiteSpace: 'pre-wrap', marginBottom: 14 }}>
-        {post.content}
-      </div>
-
-      {post.image_url && (
-        <div style={{ marginBottom: 14, borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <img src={post.image_url} alt="" style={{ width: '100%', display: 'block', maxHeight: 360, objectFit: 'cover' }} />
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+          {ann.pinned && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-dim)', padding: '2px 8px', borderRadius: 10 }}>📌 Pinned</span>
+          )}
+          {isAdmin && (
+            <>
+              <button onClick={() => onPin(ann.id)}
+                style={{ background: 'none', border: 'none', color: ann.pinned ? 'var(--accent)' : 'var(--text-muted)', fontSize: 12, cursor: 'pointer', padding: '3px 8px', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontWeight: 500 }}>
+                {ann.pinned ? 'Unpin' : 'Pin'}
+              </button>
+              <button onClick={() => onDelete(ann.id)}
+                style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', padding: '3px 8px', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontWeight: 500 }}>
+                Delete
+              </button>
+            </>
+          )}
         </div>
-      )}
+      </div>
+      <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{ann.content}</p>
+    </div>
+  );
+}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-        <button
-          onClick={() => onLike(post.id)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: liked ? 'var(--accent-dim)' : 'none',
-            border: `1px solid ${liked ? 'var(--accent)' : 'transparent'}`,
-            borderRadius: 20, padding: '4px 12px',
-            color: liked ? 'var(--accent)' : 'var(--text-muted)',
-            fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            transition: 'all 0.15s',
-          }}
-        >
-          <span style={{ fontSize: 14 }}>{liked ? '❤️' : '🤍'}</span>
-          {post.likes_count || 0}
-        </button>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          {post.comments_count || 0} comments
+function ActivityCard({ item }) {
+  const style = ACTION_ICONS[item.action_type] || { icon: '•', color: 'var(--text-muted)' };
+  return (
+    <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <Avatar name={item.user_name} color={item.user_color} size={36} />
+        <span style={{
+          position: 'absolute', bottom: -2, right: -2,
+          background: 'var(--bg-secondary)', borderRadius: '50%',
+          width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, border: '1.5px solid var(--bg-secondary)',
+        }}>
+          {style.icon}
+        </span>
+      </div>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4, margin: '0 0 4px' }}>{item.description}</p>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
         </span>
       </div>
     </div>
   );
 }
 
-const CATEGORIES = ['', 'update', 'announcement', 'question', 'win', 'idea'];
-
 export default function Feed() {
   const { user } = useAuth();
-  const [posts, setPosts] = useState([]);
+  const [data, setData] = useState({ activities: [], announcements: [] });
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState('');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const textareaRef = useRef(null);
+  const [newAnn, setNewAnn] = useState('');
+  const [pinned, setPinned] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
-  const load = async (p = 1, append = false) => {
-    try {
-      const res = await api.get(`/feed?page=${p}&limit=10`);
-      if (append) setPosts(prev => [...prev, ...res.data]);
-      else setPosts(res.data);
-      setHasMore(res.data.length === 10);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  };
+  const load = () => api.get('/feed').then(r => { setData(r.data); setLoading(false); });
+  useEffect(() => { load(); }, []);
 
-  useEffect(() => { load(1); }, []);
-
-  const handlePost = async (e) => {
+  const postAnnouncement = async (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
-    setSubmitting(true);
-    try {
-      const res = await api.post('/feed', { content: content.trim(), category });
-      setPosts(prev => [res.data, ...prev]);
-      setContent('');
-      setCategory('');
-    } catch (err) { console.error(err); }
-    finally { setSubmitting(false); }
+    if (!newAnn.trim()) return;
+    setPosting(true);
+    await api.post('/feed/announcements', { content: newAnn, pinned });
+    setNewAnn(''); setPinned(false);
+    setPosting(false);
+    load();
   };
 
-  const handleLike = async (postId) => {
-    try {
-      const res = await api.post(`/feed/${postId}/like`);
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes_count: res.data.likes_count, liked_by: res.data.liked_by } : p));
-    } catch (err) { console.error(err); }
+  const handlePin = async (id) => {
+    await api.put(`/feed/announcements/${id}/pin`);
+    load();
   };
 
-  const handleDelete = async (postId) => {
-    if (!window.confirm('Delete this post?')) return;
-    try {
-      await api.delete(`/feed/${postId}`);
-      setPosts(prev => prev.filter(p => p.id !== postId));
-    } catch (err) { console.error(err); }
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this announcement?')) return;
+    await api.delete(`/feed/announcements/${id}`);
+    load();
   };
 
-  const loadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    load(nextPage, true);
-  };
+  const tabStyle = (active) => ({
+    padding: '8px 16px', background: 'none', border: 'none',
+    borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
+    color: active ? 'var(--accent)' : 'var(--text-muted)',
+    fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+    transition: 'all var(--transition)',
+  });
+
+  const pinnedAnns = data.announcements.filter(a => a.pinned);
+  const allAnns = data.announcements;
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div className="animate-fade-in" style={{ maxWidth: 720 }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 2 }}>Team Feed</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Share updates, announcements, and celebrate wins</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Team Feed</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Announcements, updates, and team activity</p>
       </div>
 
-      {/* Compose Box */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '18px 20px', marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <Avatar name={user?.name} color={user?.avatar_color} size={38} />
-          <form onSubmit={handlePost} style={{ flex: 1 }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '18px 20px', marginBottom: 24 }}>
+        <form onSubmit={postAnnouncement}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
+            <Avatar name={user?.name} color={user?.avatar_color} size={36} />
             <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              placeholder={`What's on your mind, ${user?.name?.split(' ')[0]}?`}
-              rows={3}
+              value={newAnn}
+              onChange={e => setNewAnn(e.target.value)}
+              placeholder="Share an update with the team..."
               style={{
-                width: '100%', background: 'var(--bg-tertiary)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontSize: 14,
-                padding: '10px 12px', resize: 'none', outline: 'none',
-                transition: 'border-color var(--transition)', lineHeight: 1.5,
+                flex: 1, minHeight: 72, padding: '10px 14px',
+                background: 'var(--bg-tertiary)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius)', color: 'var(--text-primary)',
+                fontSize: 13.5, resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5,
               }}
-              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-              <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 48 }}>
+            {user?.role === 'admin' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)}
+                  style={{ accentColor: 'var(--accent)', width: 14, height: 14 }} />
+                Pin announcement
+              </label>
+            )}
+            <div style={{ marginLeft: 'auto' }}>
+              <button type="submit" disabled={posting || !newAnn.trim()}
                 style={{
-                  padding: '6px 10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)', color: category ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontSize: 12, outline: 'none', cursor: 'pointer',
-                }}
-              >
-                <option value="">No category</option>
-                {CATEGORIES.filter(Boolean).map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-              </select>
-              <Button type="submit" loading={submitting} disabled={!content.trim()}>Post Update</Button>
+                  background: 'var(--accent)', border: 'none', color: '#fff',
+                  padding: '8px 18px', borderRadius: 'var(--radius)', fontSize: 13,
+                  fontWeight: 600, cursor: posting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit', opacity: posting || !newAnn.trim() ? 0.6 : 1,
+                }}>
+                {posting ? 'Posting…' : 'Post Update'}
+              </button>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
 
-      {/* Posts */}
-      {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-          <div style={{ width: 28, height: 28, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        </div>
-      ) : posts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>No posts yet</div>
-          <div>Be the first to share something with the team!</div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {posts.map(post => (
-            <PostCard key={post.id} post={post} currentUser={user} onLike={handleLike} onDelete={handleDelete} />
+      {pinnedAnns.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Pinned</div>
+          {pinnedAnns.map(a => (
+            <AnnouncementCard key={a.id} ann={a} isAdmin={user?.role === 'admin'} onPin={handlePin} onDelete={handleDelete} />
           ))}
-          {hasMore && (
-            <button onClick={loadMore} style={{
-              padding: '12px', background: 'none', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)', color: 'var(--text-muted)',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all var(--transition)',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-            >Load more posts</button>
-          )}
         </div>
       )}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+        <button style={tabStyle(activeTab === 'all')} onClick={() => setActiveTab('all')}>All Activity</button>
+        <button style={tabStyle(activeTab === 'announcements')} onClick={() => setActiveTab('announcements')}>Announcements</button>
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
+          <div style={{ width: 24, height: 24, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      ) : activeTab === 'all' ? (
+        <div>
+          {data.activities.length === 0
+            ? <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No activity yet.</p>
+            : data.activities.map(a => <ActivityCard key={a.id} item={a} />)
+          }
+        </div>
+      ) : (
+        <div>
+          {allAnns.filter(a => !a.pinned).length === 0 && pinnedAnns.length === 0
+            ? <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No announcements yet.</p>
+            : allAnns.filter(a => !a.pinned).map(a => (
+              <AnnouncementCard key={a.id} ann={a} isAdmin={user?.role === 'admin'} onPin={handlePin} onDelete={handleDelete} />
+            ))
+          }
+        </div>
+      )}
     </div>
   );
 }

@@ -2,103 +2,120 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import Avatar from '../components/common/Avatar';
+import { Tag } from '../components/common/Badge';
+import Modal from '../components/common/Modal';
+import { useAuth } from '../context/AuthContext';
 
-const DEPT_COLORS = {
-  engineering: '#3b82f6',
-  design: '#8b5cf6',
-  marketing: '#f59e0b',
-  management: '#10b981',
-  sales: '#ef4444',
-};
+function PingModal({ open, onClose, target }) {
+  const { user } = useAuth();
+  const [msg, setMsg] = useState('');
 
-function MemberCard({ member, taskCount, onClick }) {
-  const deptColor = DEPT_COLORS[member.department?.toLowerCase()] || '#3b82f6';
+  useEffect(() => {
+    if (open && target) setMsg(`Hey ${target.name.split(' ')[0]}, `);
+  }, [open, target]);
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Ping ${target?.name}`} width={420}>
+      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+        This opens a pre-filled message for internal team communication.
+      </p>
+      <textarea
+        value={msg}
+        onChange={e => setMsg(e.target.value)}
+        style={{
+          width: '100%', minHeight: 100, padding: '10px 12px',
+          background: 'var(--bg-tertiary)', border: '1px solid var(--accent)',
+          borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontSize: 13,
+          resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5,
+        }}
+      />
+      <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+        <button onClick={onClose} style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: 'var(--radius)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
+          Cancel
+        </button>
+        <button onClick={() => { alert(`Message to ${target?.email || target?.name}:\n"${msg}"`); onClose(); }}
+          style={{ background: 'var(--accent)', border: 'none', color: '#fff', padding: '8px 18px', borderRadius: 'var(--radius)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
+          Send Ping
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function MemberCard({ member, onPing, onClick }) {
+  const ROLE_COLORS = { admin: '#f59e0b', member: '#3b82f6' };
+
   return (
     <div
-      onClick={onClick}
       style={{
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)', padding: '20px',
-        cursor: 'pointer', transition: 'all var(--transition)',
-        display: 'flex', flexDirection: 'column', gap: 14,
+        borderRadius: 'var(--radius-xl)', padding: '24px',
+        display: 'flex', flexDirection: 'column', gap: 16,
+        transition: 'all var(--transition)', cursor: 'pointer',
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+      onClick={onClick}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ position: 'relative' }}>
-          <Avatar name={member.name} color={member.avatar_color} size={48} />
-          <div style={{
-            position: 'absolute', bottom: 1, right: 1,
-            width: 10, height: 10, borderRadius: '50%',
-            background: member.is_online ? 'var(--success)' : 'var(--border-light)',
-            border: '2px solid var(--bg-card)',
-          }} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.name}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.job_title || member.role}</div>
-          {member.department && (
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-              background: deptColor + '18', color: deptColor, textTransform: 'uppercase', letterSpacing: '0.04em',
-            }}>{member.department}</span>
-          )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Avatar name={member.name} color={member.avatar_color} size={52} />
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{member.name}</div>
+          <span style={{ fontSize: 11, fontWeight: 600, background: ROLE_COLORS[member.role] + '18', color: ROLE_COLORS[member.role], padding: '2px 9px', borderRadius: 10, textTransform: 'capitalize' }}>
+            {member.role}
+          </span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--accent)' }}>{taskCount}</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Tasks</div>
-        </div>
-        <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: member.is_online ? 'var(--success)' : 'var(--text-muted)' }}>
-            {member.is_online ? 'Online' : 'Offline'}
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status</div>
-        </div>
-      </div>
+      {member.bio && (
+        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>
+          {member.bio}
+        </p>
+      )}
 
-      {member.email && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-          </svg>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.email}</span>
+      {member.skills?.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {member.skills.slice(0, 4).map(s => <Tag key={s} label={s} />)}
+          {member.skills.length > 4 && <Tag label={`+${member.skills.length - 4}`} />}
         </div>
       )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+        {member.email && (
+          <span style={{ fontSize: 11.5, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            {member.email}
+          </span>
+        )}
+        <button
+          onClick={e => { e.stopPropagation(); onPing(member); }}
+          style={{
+            background: 'var(--accent-dim)', border: '1px solid rgba(59,130,246,0.25)',
+            color: 'var(--accent)', padding: '5px 12px', borderRadius: 'var(--radius-sm)',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'all var(--transition)', flexShrink: 0, marginLeft: 8,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent-dim)'; e.currentTarget.style.color = 'var(--accent)'; }}
+        >
+          Ping
+        </button>
+      </div>
     </div>
   );
 }
 
 export default function TeamDirectory() {
-  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
-  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [deptFilter, setDeptFilter] = useState('all');
+  const [pingTarget, setPingTarget] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([api.get('/users'), api.get('/tasks')])
-      .then(([u, t]) => { setMembers(u.data); setTasks(t.data); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    api.get('/users').then(r => { setMembers(r.data); setLoading(false); });
   }, []);
 
-  const departments = ['all', ...new Set(members.map(m => m.department).filter(Boolean))];
-
-  const filtered = members.filter(m => {
-    if (deptFilter !== 'all' && m.department !== deptFilter) return false;
-    if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.job_title?.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
-
-  const getActiveTasks = (memberId) => tasks.filter(t => t.assignee_id === memberId && t.status !== 'done').length;
-
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
       <div style={{ width: 28, height: 28, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -106,60 +123,23 @@ export default function TeamDirectory() {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 2 }}>Team Directory</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{members.length} team members</p>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Team</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{members.length} members · AI Solutions Bahrain</p>
       </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-        <input
-          placeholder="Search by name or title…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{
-            padding: '8px 12px', background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: 240,
-          }}
-          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-          onBlur={e => e.target.style.borderColor = 'var(--border)'}
-        />
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {departments.map(dept => (
-            <button
-              key={dept}
-              onClick={() => setDeptFilter(dept)}
-              style={{
-                padding: '7px 14px',
-                background: deptFilter === dept ? 'var(--accent)' : 'var(--bg-secondary)',
-                border: `1px solid ${deptFilter === dept ? 'var(--accent)' : 'var(--border)'}`,
-                borderRadius: 'var(--radius)',
-                color: deptFilter === dept ? '#fff' : 'var(--text-secondary)',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                transition: 'all var(--transition)', textTransform: 'capitalize',
-              }}
-            >{dept === 'all' ? 'All' : dept}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-        {filtered.map(member => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
+        {members.map(m => (
           <MemberCard
-            key={member.id}
-            member={member}
-            taskCount={getActiveTasks(member.id)}
-            onClick={() => navigate(`/team/${member.id}`)}
+            key={m.id}
+            member={m}
+            onPing={setPingTarget}
+            onClick={() => navigate(`/team/${m.id}`)}
           />
         ))}
-        {filtered.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
-            <div>No members found</div>
-          </div>
-        )}
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      <PingModal open={!!pingTarget} onClose={() => setPingTarget(null)} target={pingTarget} />
     </div>
   );
 }
