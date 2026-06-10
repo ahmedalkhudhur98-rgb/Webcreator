@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink-950: #09090b;
+  --color-ink-900: #0e0e11;
+  --color-ink-850: #131316;
+  --color-ink-800: #18181c;
+  --color-ink-700: #232329;
+  --color-ink-600: #2e2e36;
+
+  --color-gold: #c9a961;
+  --color-gold-light: #e8d5a8;
+  --color-gold-dark: #9a7d3f;
+  --color-champagne: #f3e7c9;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant), ui-serif, Georgia, serif;
+}
+
+body {
+  background: var(--color-ink-950);
+  color: #e7e5e0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(201, 169, 97, 0.3);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-600);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dark);
+}
+
+@utility card {
+  background: linear-gradient(160deg, var(--color-ink-850), var(--color-ink-900));
+  border: 1px solid var(--color-ink-700);
+  border-radius: 0.75rem;
+}
+
+@utility gold-ring {
+  box-shadow: 0 0 0 1px rgba(201, 169, 97, 0.35), 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+@utility input-base {
+  width: 100%;
+  background: var(--color-ink-900);
+  border: 1px solid var(--color-ink-600);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  color: #e7e5e0;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.12);
+  }
+  &::placeholder {
+    color: #57565e;
+  }
+}
+
+@utility btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  color: #100d05;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  transition: filter 0.2s, transform 0.1s;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: #a8a5a0;
+  border: 1px solid var(--color-ink-600);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  transition: border-color 0.2s, color 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-gold);
+    color: var(--color-gold-light);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.35s ease both;
+}

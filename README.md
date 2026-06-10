@@ -1,132 +1,67 @@
-# TeamOS — Internal Team Productivity App
+# The Elite Brotherhood
 
-A full-stack team productivity app built for a small AI solutions business team in Bahrain. Dark theme, electric blue accent, no fluff.
+Private team workspace for an AI automation agency — projects, kanban tasks, timeline, team, and an activity chronicle, wrapped in a dark charcoal + champagne-gold private-club aesthetic.
 
 ## Stack
 
-- **Frontend:** React 18 + Vite, CSS Modules, @hello-pangea/dnd
-- **Backend:** Node.js + Express
-- **Database:** SQLite via better-sqlite3 (local file, no setup needed)
-- **Auth:** JWT (local username/password)
-
-## Project Structure
-
-```
-Webcreator/
-├── client/          # React + Vite frontend
-│   └── src/
-│       ├── components/
-│       │   ├── Layout/      # Sidebar, Layout wrapper
-│       │   ├── Tasks/       # KanbanBoard, TaskList, TaskModal
-│       │   └── common/      # Avatar, Badge, Modal, Button
-│       ├── context/         # AuthContext
-│       ├── pages/           # Dashboard, Tasks, TeamDirectory, UserProfile, Feed, Login
-│       └── utils/           # Axios API client
-└── server/          # Express + SQLite backend
-    └── src/
-        ├── db/              # DB init + seed script
-        ├── middleware/       # JWT auth middleware
-        └── routes/          # auth, users, tasks, feed, dashboard
-```
-
-## Quick Start
-
-### 1. Install dependencies
-
-```bash
-# Backend
-cd server && npm install
-
-# Frontend
-cd ../client && npm install
-```
-
-### 2. Seed the database
-
-```bash
-cd server && npm run seed
-```
-
-This creates `server/data/app.db` with 3 demo users and sample tasks.
-
-### 3. Run the app
-
-**Terminal 1 — Backend:**
-```bash
-cd server && npm run dev
-# Runs on http://localhost:3001
-```
-
-**Terminal 2 — Frontend:**
-```bash
-cd client && npm run dev
-# Runs on http://localhost:5173
-```
-
-Open [http://localhost:5173](http://localhost:5173)
-
-## Demo Accounts
-
-| Username | Password   | Role   |
-|----------|------------|--------|
-| `admin`  | `admin123` | Admin  |
-| `omar`   | `omar123`  | Member |
-| `layla`  | `layla123` | Member |
-
----
+- **Next.js (App Router) + TypeScript**
+- **Tailwind CSS v4** — custom dark theme with gold accents
+- **SQLite + Prisma** — local file database, zero external services
+- **NextAuth (Auth.js v5)** — email/password credentials, invite-only (no public signup)
+- **@hello-pangea/dnd** — drag-and-drop kanban
 
 ## Features
 
-- **Dashboard** — My tasks widget, upcoming deadlines (next 7 days), team stats, recent activity feed
-- **Tasks** — Kanban board (drag & drop between columns) + list view toggle, filter by priority/assignee/search, task comments/activity log
-- **Team** — Member cards with skills, bio, active tasks; Ping button; editable profiles
-- **Feed** — Activity log, announcements with pin support (admin only), post updates
+| Page | What it does |
+| --- | --- |
+| **Dashboard** | Active projects with progress, your open tasks, deadlines due this week, recent activity |
+| **Projects** | Create/edit/delete projects — name, client, description, status, start date, deadline |
+| **Tasks** | Drag-and-drop kanban (To Do / In Progress / Review / Done), priority, assignee, due dates, project filter |
+| **Timeline** | Gantt-style chart of all projects and tasks across the calendar with a "Now" marker |
+| **Team** | Member profiles with role, avatar, and what each brother is currently working on |
+| **Activity** | Day-grouped feed of everything that happens (created, moved, completed, commented) |
+| **Comments** | Discussion thread inside every task |
 
-## API Routes
+## Quick start
 
-All routes require `Authorization: Bearer <token>` except `/api/auth/login`.
+```bash
+npm install
+npx prisma db push     # create SQLite db from schema
+npm run db:seed        # seed 3 members, 3 projects, 10 tasks
+npm run dev            # http://localhost:3000
+```
 
-### Auth
-| Method | Route | Description |
-|--------|-------|-------------|
-| `POST` | `/api/auth/login` | Login — returns JWT + user object |
-| `GET`  | `/api/auth/me` | Get current authenticated user |
+`.env` needs:
 
-### Users
-| Method   | Route | Description |
-|----------|-------|-------------|
-| `GET`    | `/api/users` | List all team members |
-| `GET`    | `/api/users/:id` | Get user profile + active tasks |
-| `POST`   | `/api/users` | Create user (admin only) |
-| `PUT`    | `/api/users/:id` | Update profile (own or admin) |
-| `DELETE` | `/api/users/:id` | Delete user (admin only) |
+```
+DATABASE_URL="file:./dev.db"
+AUTH_SECRET="any-long-random-string"
+AUTH_TRUST_HOST=true
+```
 
-### Tasks
-| Method   | Route | Description |
-|----------|-------|-------------|
-| `GET`    | `/api/tasks` | List tasks (query: `status`, `priority`, `assignee`, `tag`, `search`) |
-| `GET`    | `/api/tasks/:id` | Get task detail + comments |
-| `POST`   | `/api/tasks` | Create task |
-| `PUT`    | `/api/tasks/:id` | Update task |
-| `DELETE` | `/api/tasks/:id` | Delete task (owner or admin) |
-| `POST`   | `/api/tasks/:id/comments` | Add comment to task |
+## Test accounts
 
-### Feed
-| Method   | Route | Description |
-|----------|-------|-------------|
-| `GET`    | `/api/feed` | Get activity feed + announcements |
-| `POST`   | `/api/feed/announcements` | Post announcement |
-| `PUT`    | `/api/feed/announcements/:id/pin` | Toggle pin (admin only) |
-| `DELETE` | `/api/feed/announcements/:id` | Delete announcement |
+All seeded members share the password **`brotherhood123`**:
 
-### Dashboard
-| Method | Route | Description |
-|--------|-------|-------------|
-| `GET`  | `/api/dashboard` | Aggregated: my tasks, deadlines, stats, recent activity |
+| Email | Member |
+| --- | --- |
+| `ahmed@elitebrotherhood.dev` | Ahmed Alkhudhur — Founder & Lead Engineer |
+| `omar@elitebrotherhood.dev` | Omar Hassan — AI Engineer |
+| `youssef@elitebrotherhood.dev` | Youssef Karim — Design & Frontend |
 
----
+## Inviting new members
 
-## Roles
+There is intentionally no signup page. Add a member directly:
 
-- **Admin** — full access: manage users, delete any task, pin/delete announcements
-- **Member** — create/edit own tasks, view all, post updates, edit own profile
+```bash
+npx tsx -e "
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+const p = new PrismaClient();
+p.user.create({ data: {
+  email: 'new@elitebrotherhood.dev',
+  passwordHash: await bcrypt.hash('their-password', 10),
+  name: 'New Brother', role: 'Engineer', initials: 'NB', avatarColor: '#C9A961',
+}}).then(() => console.log('invited'));
+"
+```
