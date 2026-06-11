@@ -6,9 +6,10 @@ Private team workspace for an AI automation agency — projects, kanban tasks, t
 
 - **Next.js (App Router) + TypeScript**
 - **Tailwind CSS v4** — custom dark theme with gold accents
-- **SQLite + Prisma** — local file database, zero external services
+- **PostgreSQL (Neon) + Prisma** — free hosted Postgres, works with any Postgres locally
 - **NextAuth (Auth.js v5)** — email/password credentials, invite-only (no public signup)
 - **@hello-pangea/dnd** — drag-and-drop kanban
+- Deploys to **Vercel** (see below)
 
 ## Features
 
@@ -22,22 +23,35 @@ Private team workspace for an AI automation agency — projects, kanban tasks, t
 | **Activity** | Day-grouped feed of everything that happens (created, moved, completed, commented) |
 | **Comments** | Discussion thread inside every task |
 
-## Quick start
+## Quick start (local)
+
+You need a Postgres connection string — either a free [Neon](https://neon.tech) database or a local Postgres.
 
 ```bash
 npm install
-npx prisma db push     # create SQLite db from schema
+cp .env.example .env   # fill in DATABASE_URL and AUTH_SECRET
+npx prisma db push     # create tables from schema
 npm run db:seed        # seed 3 members, 3 projects, 10 tasks
 npm run dev            # http://localhost:3000
 ```
 
-`.env` needs:
+## Deploying to Vercel + Neon
 
-```
-DATABASE_URL="file:./dev.db"
-AUTH_SECRET="any-long-random-string"
-AUTH_TRUST_HOST=true
-```
+1. **Create the database** — sign up at [neon.tech](https://neon.tech) (free tier), create a project, and copy the **pooled connection string** (the one containing `-pooler`, ending in `?sslmode=require`).
+2. **Create the tables and seed data** — from your machine:
+   ```bash
+   DATABASE_URL="<neon-pooled-url>" npx prisma db push
+   DATABASE_URL="<neon-pooled-url>" npm run db:seed
+   ```
+3. **Import the repo on Vercel** — at [vercel.com/new](https://vercel.com/new), import `ahmedalkhudhur98-rgb/Webcreator` and select the branch to deploy. Build settings need no changes (`npm run build` already runs `prisma generate`).
+4. **Set environment variables** in the Vercel project settings (Production + Preview):
+   | Name | Value |
+   | --- | --- |
+   | `DATABASE_URL` | the Neon pooled connection string |
+   | `AUTH_SECRET` | output of `openssl rand -base64 32` |
+5. **Deploy.** Share the `*.vercel.app` URL with the team — everyone logs in with their seeded account.
+
+> Tip: Vercel's Neon integration (Storage → Neon) can create the database and inject `DATABASE_URL` automatically — you'd then only add `AUTH_SECRET` and run step 2 against the URL it generated.
 
 ## Test accounts
 
