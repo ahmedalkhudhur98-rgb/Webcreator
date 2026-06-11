@@ -29,23 +29,13 @@ async function main() {
       avatarColor: "#C9A961",
     },
   });
-  const omar = await prisma.user.create({
+  const jawadi = await prisma.user.create({
     data: {
-      email: "omar@elitebrotherhood.dev",
+      email: "jawadi@elitebrotherhood.dev",
       passwordHash: password,
-      name: "Omar Hassan",
-      role: "AI Engineer",
-      initials: "OH",
-      avatarColor: "#8B7355",
-    },
-  });
-  const youssef = await prisma.user.create({
-    data: {
-      email: "youssef@elitebrotherhood.dev",
-      passwordHash: password,
-      name: "Youssef Karim",
-      role: "Design & Frontend",
-      initials: "YK",
+      name: "Jawadi",
+      role: "Engineer",
+      initials: "JA",
       avatarColor: "#A67C52",
     },
   });
@@ -92,7 +82,7 @@ async function main() {
       priority: "HIGH",
       dueDate: daysFromNow(3),
       projectId: lumina.id,
-      assigneeId: youssef.id,
+      assigneeId: jawadi.id,
       order: 0,
     },
     {
@@ -102,7 +92,7 @@ async function main() {
       priority: "URGENT",
       dueDate: daysFromNow(5),
       projectId: lumina.id,
-      assigneeId: omar.id,
+      assigneeId: jawadi.id,
       order: 0,
     },
     {
@@ -142,7 +132,7 @@ async function main() {
       priority: "HIGH",
       dueDate: daysFromNow(10),
       projectId: atlas.id,
-      assigneeId: omar.id,
+      assigneeId: jawadi.id,
       order: 2,
     },
     {
@@ -152,7 +142,7 @@ async function main() {
       priority: "LOW",
       dueDate: daysFromNow(14),
       projectId: atlas.id,
-      assigneeId: omar.id,
+      assigneeId: jawadi.id,
       order: 3,
     },
     {
@@ -162,7 +152,7 @@ async function main() {
       priority: "URGENT",
       dueDate: daysFromNow(1),
       projectId: nour.id,
-      assigneeId: youssef.id,
+      assigneeId: jawadi.id,
       order: 0,
     },
     {
@@ -182,7 +172,7 @@ async function main() {
       priority: "LOW",
       dueDate: daysFromNow(-5),
       projectId: nour.id,
-      assigneeId: youssef.id,
+      assigneeId: jawadi.id,
       order: 1,
     },
   ];
@@ -202,14 +192,14 @@ async function main() {
   await prisma.comment.create({
     data: {
       taskId: createdTasks[0].id,
-      authorId: youssef.id,
+      authorId: jawadi.id,
       body: "Yes, easy add — I'll generate the .ics server-side after booking confirms.",
     },
   });
   await prisma.comment.create({
     data: {
       taskId: createdTasks[7].id,
-      authorId: omar.id,
+      authorId: jawadi.id,
       body: "Looks like we were sending priority 5 instead of 10 on APNs. Fix is in review.",
     },
   });
@@ -217,17 +207,17 @@ async function main() {
   const activities = [
     { type: "PROJECT_CREATED", message: "created project Atlas Logistics AI Agent", userId: ahmed.id, projectId: atlas.id },
     { type: "TASK_CREATED", message: "created task “Prototype classification pipeline”", userId: ahmed.id, projectId: atlas.id, taskId: createdTasks[5].id },
-    { type: "TASK_MOVED", message: "moved “Build booking flow UI” to In Progress", userId: youssef.id, projectId: lumina.id, taskId: createdTasks[0].id },
+    { type: "TASK_MOVED", message: "moved “Build booking flow UI” to In Progress", userId: jawadi.id, projectId: lumina.id, taskId: createdTasks[0].id },
     { type: "TASK_COMPLETED", message: "completed “Deploy staging environment”", userId: ahmed.id, projectId: lumina.id, taskId: createdTasks[3].id },
-    { type: "TASK_MOVED", message: "moved “Fix push notification delays on iOS” to Review", userId: youssef.id, projectId: nour.id, taskId: createdTasks[7].id },
-    { type: "COMMENT_ADDED", message: "commented on “Build booking flow UI”", userId: youssef.id, projectId: lumina.id, taskId: createdTasks[0].id },
-    { type: "TASK_COMPLETED", message: "completed “App Store screenshots + listing”", userId: youssef.id, projectId: nour.id, taskId: createdTasks[9].id },
+    { type: "TASK_MOVED", message: "moved “Fix push notification delays on iOS” to Review", userId: jawadi.id, projectId: nour.id, taskId: createdTasks[7].id },
+    { type: "COMMENT_ADDED", message: "commented on “Build booking flow UI”", userId: jawadi.id, projectId: lumina.id, taskId: createdTasks[0].id },
+    { type: "TASK_COMPLETED", message: "completed “App Store screenshots + listing”", userId: jawadi.id, projectId: nour.id, taskId: createdTasks[9].id },
   ];
   for (const a of activities) {
     await prisma.activity.create({ data: a });
   }
 
-  console.log("Seeded: 3 users, 3 projects, 10 tasks, 3 comments, 7 activities");
+  console.log("Seeded: 2 users, 3 projects, 10 tasks, 3 comments, 7 activities");
 }
 
 main()

@@ -31,7 +31,7 @@ You need a Postgres connection string — either a free [Neon](https://neon.tech
 npm install
 cp .env.example .env   # fill in DATABASE_URL and AUTH_SECRET
 npx prisma db push     # create tables from schema
-npm run db:seed        # seed 3 members, 3 projects, 10 tasks
+npm run db:seed        # seed 2 members, 3 projects, 10 tasks
 npm run dev            # http://localhost:3000
 ```
 
@@ -60,8 +60,7 @@ All seeded members share the password **`brotherhood123`**:
 | Email | Member |
 | --- | --- |
 | `ahmed@elitebrotherhood.dev` | Ahmed Alkhudhur — Founder & Lead Engineer |
-| `omar@elitebrotherhood.dev` | Omar Hassan — AI Engineer |
-| `youssef@elitebrotherhood.dev` | Youssef Karim — Design & Frontend |
+| `jawadi@elitebrotherhood.dev` | Jawadi — Engineer |
 
 ## Inviting new members
 
